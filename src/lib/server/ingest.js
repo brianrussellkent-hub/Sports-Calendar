@@ -4,12 +4,16 @@ import axios from 'axios';
 import ical from 'node-ical';
 import { getConfig } from './config.js';
 import { readCache, writeCache } from './storage.js';
+import { getSampleEvents } from './sources.js';
 
 function toUtcIso(dateLike) {
   const date = new Date(dateLike);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
+async function loadFeed(url) {
+  const response = await axios.get(url, { timeout: 15000 });
+  return { raw: response.data, source: url };
 async function loadFeed(url, fallbackPath) {
   try {
     const response = await axios.get(url, { timeout: 15000 });
@@ -23,6 +27,7 @@ async function loadFeed(url, fallbackPath) {
 
 function normalizeEvent({ rawEvent, categoryId, source, nowIso }) {
   if (!rawEvent.start || !rawEvent.summary) return null;
+
   const stableUid = rawEvent.uid ?? `${categoryId}-${rawEvent.summary}-${rawEvent.start.toISOString()}`;
   const normalized = {
     id: `${categoryId}:${stableUid}`,
@@ -34,6 +39,7 @@ function normalizeEvent({ rawEvent, categoryId, source, nowIso }) {
     source,
     last_updated: nowIso
   };
+
   if (!normalized.start || !normalized.end) return null;
   return normalized;
 }
@@ -42,6 +48,43 @@ export async function refreshEvents() {
   const config = await getConfig();
   const nowIso = new Date().toISOString();
   const mergedEvents = new Map();
+  const errors = [];
+
+  for (const category of config.categories) {
+    for (const feed of category.feeds) {
+      try {
+        const { raw, source } = await loadFeed(feed.url);
+        const parsed = ical.sync.parseICS(raw);
+
+        for (const value of Object.values(parsed)) {
+          if (value.type !== 'VEVENT') continue;
+          const normalized = normalizeEvent({ rawEvent: value, categoryId: category.id, source, nowIso });
+          if (!normalized) continue;
+          mergedEvents.set(normalized.id, normalized);
+        }
+      } catch (error) {
+        errors.push({
+          sport: category.id,
+          feed: feed.url,
+          message: error.message
+        });
+      }
+    }
+  }
+
+  const sampleEvents = getSampleEvents(nowIso);
+
+  if (!mergedEvents.size) {
+    for (const sample of sampleEvents) {
+      mergedEvents.set(sample.id, sample);
+    }
+  }
+
+  const nextCache = {
+    lastRunAt: nowIso,
+    events: [...mergedEvents.values()].sort((a, b) => a.start.localeCompare(b.start)),
+    errors,
+    usedSampleFallback: !errors.length ? false : mergedEvents.size === sampleEvents.length
 
   for (const category of config.categories) {
     for (const feed of category.feeds) {
@@ -67,6 +110,13 @@ export async function refreshEvents() {
 }
 
 export async function getEvents({ search = '', sports = [] } = {}) {
+  let cache = await readCache();
+  if (!cache.events.length) {
+    cache = await refreshEvents();
+  }
+
+  const normalizedSearch = search.trim().toLowerCase();
+  const events = cache.events.filter((event) => {
   let { events } = await readCache();
   if (!events.length) {
     const refreshed = await refreshEvents();
@@ -81,4 +131,11 @@ export async function getEvents({ search = '', sports = [] } = {}) {
       : true;
     return matchesSport && matchesSearch;
   });
+
+  return {
+    events,
+    warnings: cache.errors ?? [],
+    usedSampleFallback: cache.usedSampleFallback ?? false,
+    lastRunAt: cache.lastRunAt ?? null
+  };
 }

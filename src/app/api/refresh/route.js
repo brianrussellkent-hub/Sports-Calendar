@@ -10,6 +10,7 @@ function isAuthorized(request) {
   return auth === `Bearer ${secret}`;
 }
 
+async function refresh(request) {
 export async function GET(request) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -17,12 +18,27 @@ export async function GET(request) {
 
   try {
     const result = await refreshEvents();
+    return NextResponse.json({
+      message: 'Refreshed',
+      count: result.events.length,
+      lastRunAt: result.lastRunAt,
+      warnings: result.errors,
+      usedSampleFallback: result.usedSampleFallback
+    });
+  } catch (error) {
+    console.error('[api/refresh] refresh failed', error);
     return NextResponse.json({ message: 'Refreshed', count: result.events.length, lastRunAt: result.lastRunAt });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
+export async function GET(request) {
+  return refresh(request);
+}
+
+export async function POST(request) {
+  return refresh(request);
 export async function POST(request) {
   return GET(request);
 }
