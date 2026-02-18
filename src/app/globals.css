@@ -1,0 +1,206 @@
+:root {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #13213c;
+  background: #f5f7fb;
+}
+
+body {
+  margin: 0;
+}
+
+.layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.topbar h1 {
+  margin: 0;
+}
+
+.topbar p {
+  color: #4f5f7d;
+}
+
+
+.banner {
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.banner.info {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+
+.banner.warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.banner.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.controls,
+.calendar-shell {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(16, 38, 76, 0.08);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ced6e6;
+  font-size: 0.95rem;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.chip,
+.calendar-toolbar button,
+.view-switch button {
+  border: 1px solid #7e8cad;
+  background: transparent;
+  color: #314870;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chip.active,
+.view-switch .active {
+  background: #1d4ed8;
+  color: #fff;
+  border-color: #1d4ed8;
+}
+
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.nav-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.view-switch {
+  display: flex;
+  gap: 8px;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.day-header {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.day-cell {
+  min-height: 120px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.day-cell.outside {
+  opacity: 0.55;
+}
+
+.day-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.day-events,
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.week-column {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.week-column h3 {
+  margin: 4px 0 8px;
+  font-size: 0.95rem;
+}
+
+.event-card {
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.event-card.compact {
+  padding: 6px;
+}
+
+.event-title {
+  font-weight: 600;
+  line-height: 1.25;
+  font-size: 0.86rem;
+}
+
+.event-meta {
+  font-size: 0.75rem;
+  color: #334155;
+}
+
+.event-sport {
+  align-self: flex-start;
+  font-size: 0.72rem;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1e3a8a;
+  padding: 1px 7px;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 0.85rem;
+}
