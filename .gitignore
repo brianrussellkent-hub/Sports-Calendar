@@ -1,0 +1,6 @@
+node_modules
+.next
+out
+/dist
+server/data/events-cache.json
+npm-debug.log*
