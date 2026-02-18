@@ -42,6 +42,13 @@ export default function HomePage() {
       } catch (loadError) {
         setError(loadError.message);
       }
+
+  useEffect(() => {
+    async function loadConfig() {
+      const response = await fetch('/api/config');
+      const payload = await response.json();
+      setConfig(payload);
+      setSelectedSports(payload.categories.map((category) => category.id));
     }
 
     loadConfig();
@@ -83,6 +90,14 @@ export default function HomePage() {
       } finally {
         setLoading(false);
       }
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (selectedSports.length && selectedSports.length !== config.categories.length) {
+        params.set('sports', selectedSports.join(','));
+      }
+      const response = await fetch(`/api/events?${params.toString()}`, { signal: controller.signal });
+      const payload = await response.json();
+      setEvents(payload.events || []);
     }
 
     loadEvents();
@@ -91,6 +106,7 @@ export default function HomePage() {
 
   const decoratedEvents = useMemo(() => {
     const labels = Object.fromEntries(config.categories.map((category) => [category.id, category.label]));
+    const labels = Object.fromEntries(config.categories.map((c) => [c.id, c.label]));
     return events
       .map((event) => ({ ...event, sportLabel: labels[event.sport] ?? event.sport, easternDate: toEventDate(event) }))
       .sort((a, b) => a.start.localeCompare(b.start));
@@ -102,6 +118,7 @@ export default function HomePage() {
       const start = anchorDate.startOf('week');
       const end = start.add(7, 'day');
       return decoratedEvents.filter((event) => !event.easternDate.isBefore(start) && event.easternDate.isBefore(end));
+      return decoratedEvents.filter((e) => !e.easternDate.isBefore(start) && e.easternDate.isBefore(end));
     }
     return decoratedEvents;
   }, [anchorDate, decoratedEvents, view]);

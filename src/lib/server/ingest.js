@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import axios from 'axios';
 import ical from 'node-ical';
 import { getConfig } from './config.js';
@@ -12,6 +14,15 @@ function toUtcIso(dateLike) {
 async function loadFeed(url) {
   const response = await axios.get(url, { timeout: 15000 });
   return { raw: response.data, source: url };
+async function loadFeed(url, fallbackPath) {
+  try {
+    const response = await axios.get(url, { timeout: 15000 });
+    return { raw: response.data, source: url };
+  } catch {
+    if (!fallbackPath) throw new Error(`Unable to load feed ${url} and no fallback configured.`);
+    const fallbackContent = await fs.readFile(path.resolve(fallbackPath), 'utf8');
+    return { raw: fallbackContent, source: `${url} (fallback)` };
+  }
 }
 
 function normalizeEvent({ rawEvent, categoryId, source, nowIso }) {
@@ -74,6 +85,24 @@ export async function refreshEvents() {
     events: [...mergedEvents.values()].sort((a, b) => a.start.localeCompare(b.start)),
     errors,
     usedSampleFallback: !errors.length ? false : mergedEvents.size === sampleEvents.length
+
+  for (const category of config.categories) {
+    for (const feed of category.feeds) {
+      const { raw, source } = await loadFeed(feed.url, feed.fallback);
+      const parsed = ical.sync.parseICS(raw);
+
+      for (const value of Object.values(parsed)) {
+        if (value.type !== 'VEVENT') continue;
+        const normalized = normalizeEvent({ rawEvent: value, categoryId: category.id, source, nowIso });
+        if (!normalized) continue;
+        mergedEvents.set(normalized.id, normalized);
+      }
+    }
+  }
+
+  const nextCache = {
+    lastRunAt: nowIso,
+    events: [...mergedEvents.values()].sort((a, b) => a.start.localeCompare(b.start))
   };
 
   await writeCache(nextCache);
@@ -88,6 +117,14 @@ export async function getEvents({ search = '', sports = [] } = {}) {
 
   const normalizedSearch = search.trim().toLowerCase();
   const events = cache.events.filter((event) => {
+  let { events } = await readCache();
+  if (!events.length) {
+    const refreshed = await refreshEvents();
+    events = refreshed.events;
+  }
+
+  const normalizedSearch = search.trim().toLowerCase();
+  return events.filter((event) => {
     const matchesSport = sports.length ? sports.includes(event.sport) : true;
     const matchesSearch = normalizedSearch
       ? `${event.title} ${event.location}`.toLowerCase().includes(normalizedSearch)

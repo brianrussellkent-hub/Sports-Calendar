@@ -32,6 +32,10 @@ This version fixes that by:
 - Visible loading state + warning/error banners in UI.
 - Fallback sample events so UI never appears blank when feeds fail.
 - Auto-jump to the nearest month containing events if the current month has none.
+- Ingestion from ICS feeds with local fallback ICS files.
+- UTC normalization internally, display in `America/New_York` with DST-aware ET formatting.
+- Daily refresh via Vercel Cron.
+- Config-driven categories/feeds via `server/config/sources.json`.
 
 ## Project structure
 ```text
@@ -48,6 +52,10 @@ This version fixes that by:
 │       ├── time.js
 │       └── server/{config,ingest,sources,storage}.js
 ├── server/data/samples/*.ics   # kept as optional reference samples
+│       └── server/{config,ingest,storage}.js
+├── server
+│   ├── config/sources.json
+│   └── data/samples/*.ics
 ├── scripts/manualRefresh.mjs
 ├── vercel.json
 └── package.json
@@ -74,6 +82,13 @@ Open `http://localhost:3000`.
 - Vercel Dashboard → Project → **Settings** → **Environment Variables**
 - Add `CRON_SECRET` with a strong random value
 - Redeploy (or trigger a new deployment)
+4. Deploy.
+
+Optional env var:
+- `CRON_SECRET` to protect `/api/refresh` (set same secret in cron auth if used).
+
+### Daily refresh
+`vercel.json` config triggers `/api/refresh` once daily at `09:00 UTC`.
 
 ## API routes
 - `GET /api/config`
@@ -90,4 +105,6 @@ Open `http://localhost:3000`.
 
 ## Future-proofing categories/teams
 Update `src/lib/server/sources.js` categories/feeds.
+## Future-proofing categories/teams
+Edit `server/config/sources.json` and add/remove entries under `categories`.
 UI filters and labels update automatically.
