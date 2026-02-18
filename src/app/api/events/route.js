@@ -8,17 +8,9 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') ?? '';
     const sports = (searchParams.get('sports') ?? '').split(',').filter(Boolean);
-    const result = await getEvents({ search, sports });
-
-    return NextResponse.json({
-      timezone: 'America/New_York',
-      events: result.events,
-      warnings: result.warnings,
-      usedSampleFallback: result.usedSampleFallback,
-      lastRunAt: result.lastRunAt
-    });
+    const events = await getEvents({ search, sports });
+    return NextResponse.json({ timezone: 'America/New_York', events });
   } catch (error) {
-    console.error('[api/events] failed to load events', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -27,21 +27,13 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [view, setView] = useState(VIEWS.month);
   const [anchorDate, setAnchorDate] = useState(startOfEasternDay());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [warning, setWarning] = useState('');
 
   useEffect(() => {
     async function loadConfig() {
-      try {
-        const response = await fetch('/api/config');
-        if (!response.ok) throw new Error('Failed to load config.');
-        const payload = await response.json();
-        setConfig(payload);
-        setSelectedSports(payload.categories.map((category) => category.id));
-      } catch (loadError) {
-        setError(loadError.message);
-      }
+      const response = await fetch('/api/config');
+      const payload = await response.json();
+      setConfig(payload);
+      setSelectedSports(payload.categories.map((category) => category.id));
     }
 
     loadConfig();
@@ -51,38 +43,14 @@ export default function HomePage() {
     const controller = new AbortController();
 
     async function loadEvents() {
-      setLoading(true);
-      setError('');
-      setWarning('');
-
-      try {
-        const params = new URLSearchParams();
-        if (search) params.set('search', search);
-        if (selectedSports.length && selectedSports.length !== config.categories.length) {
-          params.set('sports', selectedSports.join(','));
-        }
-
-        const response = await fetch(`/api/events?${params.toString()}`, { signal: controller.signal });
-        const payload = await response.json();
-
-        if (!response.ok) {
-          throw new Error(payload.error ?? 'Failed to load events.');
-        }
-
-        setEvents(payload.events || []);
-
-        if (payload.usedSampleFallback) {
-          setWarning('Live feeds are currently unavailable. Showing fallback sample events.');
-        } else if (payload.warnings?.length) {
-          setWarning('Some feeds failed to refresh. Showing available events.');
-        }
-      } catch (loadError) {
-        if (loadError.name !== 'AbortError') {
-          setError('Unable to load live feeds right now. Showing fallback sample events when available.');
-        }
-      } finally {
-        setLoading(false);
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (selectedSports.length && selectedSports.length !== config.categories.length) {
+        params.set('sports', selectedSports.join(','));
       }
+      const response = await fetch(`/api/events?${params.toString()}`, { signal: controller.signal });
+      const payload = await response.json();
+      setEvents(payload.events || []);
     }
 
     loadEvents();
@@ -90,7 +58,7 @@ export default function HomePage() {
   }, [search, selectedSports, config.categories.length]);
 
   const decoratedEvents = useMemo(() => {
-    const labels = Object.fromEntries(config.categories.map((category) => [category.id, category.label]));
+    const labels = Object.fromEntries(config.categories.map((c) => [c.id, c.label]));
     return events
       .map((event) => ({ ...event, sportLabel: labels[event.sport] ?? event.sport, easternDate: toEventDate(event) }))
       .sort((a, b) => a.start.localeCompare(b.start));
@@ -101,7 +69,7 @@ export default function HomePage() {
     if (view === VIEWS.week) {
       const start = anchorDate.startOf('week');
       const end = start.add(7, 'day');
-      return decoratedEvents.filter((event) => !event.easternDate.isBefore(start) && event.easternDate.isBefore(end));
+      return decoratedEvents.filter((e) => !e.easternDate.isBefore(start) && e.easternDate.isBefore(end));
     }
     return decoratedEvents;
   }, [anchorDate, decoratedEvents, view]);
@@ -118,10 +86,6 @@ export default function HomePage() {
         <h1>Personalized Sports Calendar</h1>
         <p>All times displayed in {EASTERN_TZ} with automatic EST/EDT transitions.</p>
       </header>
-
-      {loading && <div className="banner info">Loading events…</div>}
-      {warning && <div className="banner warning">{warning}</div>}
-      {error && <div className="banner error">{error}</div>}
 
       <section className="controls">
         <input
