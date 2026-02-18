@@ -19,6 +19,9 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('[api/events] failed to load events', error);
+    const events = await getEvents({ search, sports });
+    return NextResponse.json({ timezone: 'America/New_York', events });
+  } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

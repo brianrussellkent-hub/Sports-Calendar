@@ -11,6 +11,7 @@ function isAuthorized(request) {
 }
 
 async function refresh(request) {
+export async function GET(request) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -26,6 +27,8 @@ async function refresh(request) {
     });
   } catch (error) {
     console.error('[api/refresh] refresh failed', error);
+    return NextResponse.json({ message: 'Refreshed', count: result.events.length, lastRunAt: result.lastRunAt });
+  } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -36,4 +39,6 @@ export async function GET(request) {
 
 export async function POST(request) {
   return refresh(request);
+export async function POST(request) {
+  return GET(request);
 }

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const CACHE_PATH = path.resolve('/tmp/sports-calendar-events-cache.json');
+const CACHE_PATH = path.resolve('server/data/events-cache.json');
 
 export async function readCache() {
   try {
@@ -15,6 +16,10 @@ export async function readCache() {
     };
   } catch {
     return { lastRunAt: null, events: [], errors: [], usedSampleFallback: false };
+      events: Array.isArray(parsed.events) ? parsed.events : []
+    };
+  } catch {
+    return { lastRunAt: null, events: [] };
   }
 }
 
