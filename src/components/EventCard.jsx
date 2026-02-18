@@ -1,4 +1,5 @@
-import React from 'react';
+'use client';
+
 import { formatEasternTime } from '../lib/time';
 
 export default function EventCard({ event, compact = false }) {

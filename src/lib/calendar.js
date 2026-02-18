@@ -14,13 +14,7 @@ export const VIEWS = {
 export function buildMonthGrid(anchorDate) {
   const start = anchorDate.startOf('month').startOf('week');
   const days = Array.from({ length: 42 }, (_, i) => start.add(i, 'day'));
-  const rows = [];
-
-  for (let i = 0; i < days.length; i += 7) {
-    rows.push(days.slice(i, i + 7));
-  }
-
-  return rows;
+  return Array.from({ length: 6 }, (_, row) => days.slice(row * 7, row * 7 + 7));
 }
 
 export function buildWeekDays(anchorDate) {
@@ -44,8 +38,7 @@ export function eventsOnDay(events, day) {
 
 export function shiftAnchor(anchorDate, view, direction) {
   const step = direction === 'next' ? 1 : -1;
-  if (view === VIEWS.month) {
-    return anchorDate.add(step, 'month');
-  }
+  if (view === VIEWS.month) return anchorDate.add(step, 'month');
+  if (view === VIEWS.day) return anchorDate.add(step, 'day');
   return anchorDate.add(step, 'week');
 }

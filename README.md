@@ -1,86 +1,71 @@
-# Sports Calendar MVP
+# Sports Calendar MVP (Next.js + Vercel)
 
-A local-first sports calendar web app with a clean Google Calendar/Outlook-inspired UI.
+A personalized sports calendar web app with a clean Google Calendar / Outlook style UI.
 
-## Sports covered
+## Sports included
 - NY Mets (MLB)
 - NY Giants (NFL)
 - Formula 1
 - NASCAR
 - UCI WorldTour Cycling
 
-## Core features
-- Calendar views: **Month / Week / Day / Agenda**.
-- Category filters: MLB / NFL / F1 / NASCAR / Cycling.
+## Features
+- Views: **Month / Week / Day / Agenda**.
+- Filters by sport category.
 - Search by team/race name.
-- Event cards include title, ET start time, and sport label.
-- Times displayed in `America/New_York` with daylight savings transitions handled automatically.
-- Incoming feed data normalized to UTC internally.
-- Daily auto-refresh plus manual refresh endpoint.
-- Future-proof category/feed management via config (`server/config/sources.json`).
-
-## Event schema
-```json
-{
-  "id": "string",
-  "title": "string",
-  "sport": "string",
-  "start": "UTC ISO",
-  "end": "UTC ISO",
-  "location": "string",
-  "source": "string",
-  "last_updated": "UTC ISO"
-}
-```
+- Unified normalized event schema:
+  `{ id, title, sport, start, end, location, source, last_updated }`.
+- Ingestion from ICS feeds with local fallback ICS files.
+- UTC normalization internally, display in `America/New_York` with DST-aware ET formatting.
+- Daily refresh via Vercel Cron.
+- Config-driven categories/feeds via `server/config/sources.json`.
 
 ## Project structure
 ```text
 .
+├── src
+│   ├── app
+│   │   ├── api/{config,events,refresh}/route.js
+│   │   ├── globals.css
+│   │   ├── layout.jsx
+│   │   └── page.jsx
+│   ├── components/{EventCard,FilterBar}.jsx
+│   └── lib
+│       ├── calendar.js
+│       ├── time.js
+│       └── server/{config,ingest,storage}.js
 ├── server
 │   ├── config/sources.json
-│   ├── data/samples/*.ics
-│   ├── ingest.js
-│   ├── scheduler.js
-│   ├── storage.js
-│   └── index.js
-├── src
-│   ├── components/
-│   ├── lib/
-│   ├── App.jsx
-│   └── styles.css
-├── render.yaml
+│   └── data/samples/*.ics
+├── scripts/manualRefresh.mjs
+├── vercel.json
 └── package.json
 ```
 
-## Run locally
+## Local run
 ```bash
 npm install
 npm run dev
 ```
-Open: `http://localhost:5173`
+Open `http://localhost:3000`.
 
-## Deploy (simplest: Render)
-This repo includes `render.yaml` for one-click deployment.
+## Vercel deployment
+1. Push to GitHub.
+2. Import repo in Vercel.
+3. Framework preset: **Next.js** (auto-detected).
+4. Deploy.
 
-1. Push this branch to GitHub.
-2. In Render: **New +** → **Blueprint**.
-3. Select your repo.
-4. Render reads `render.yaml`, builds, and deploys automatically.
-5. Open the generated `https://<service>.onrender.com` URL in browser.
+Optional env var:
+- `CRON_SECRET` to protect `/api/refresh` (set same secret in cron auth if used).
 
-### Runtime behavior on deploy
-- Backend serves API and built frontend from one process (`npm start`).
-- Initial ingestion runs on boot.
-- Daily refresh runs at 4:00 AM server time.
+### Daily refresh
+`vercel.json` config triggers `/api/refresh` once daily at `09:00 UTC`.
 
-## API
+## API routes
 - `GET /api/config`
 - `GET /api/events?search=...&sports=mlb,nfl`
-- `POST /api/refresh`
+- `GET/POST /api/refresh`
 
-## Add/remove categories later
-Update `server/config/sources.json`:
-- add or remove entries under `categories`
-- add `feeds` (and optional fallback ICS path)
-
-UI filters and labels update automatically from config.
+## Future-proofing categories/teams
+Edit `server/config/sources.json` and add/remove entries under `categories`.
+UI filters and labels update automatically.

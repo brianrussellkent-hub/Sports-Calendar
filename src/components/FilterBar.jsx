@@ -1,4 +1,5 @@
-import React from 'react';
+'use client';
+
 export default function FilterBar({ categories, selected, onToggle }) {
   return (
     <div className="filter-bar">

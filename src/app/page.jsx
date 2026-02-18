@@ -1,6 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import EventCard from './components/EventCard';
-import FilterBar from './components/FilterBar';
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import EventCard from '../components/EventCard';
+import FilterBar from '../components/FilterBar';
 import {
   VIEWS,
   buildMonthGrid,
@@ -8,8 +10,8 @@ import {
   eventsOnDay,
   shiftAnchor,
   toEventDate
-} from './lib/calendar';
-import { EASTERN_TZ, startOfEasternDay } from './lib/time';
+} from '../lib/calendar';
+import { EASTERN_TZ, startOfEasternDay } from '../lib/time';
 
 const VIEW_OPTIONS = [
   { id: VIEWS.month, label: 'Month' },
@@ -18,7 +20,7 @@ const VIEW_OPTIONS = [
   { id: VIEWS.agenda, label: 'Agenda' }
 ];
 
-export default function App() {
+export default function HomePage() {
   const [config, setConfig] = useState({ categories: [] });
   const [selectedSports, setSelectedSports] = useState([]);
   const [events, setEvents] = useState([]);
@@ -42,16 +44,13 @@ export default function App() {
 
     async function loadEvents() {
       const params = new URLSearchParams();
-      if (search) {
-        params.set('search', search);
-      }
+      if (search) params.set('search', search);
       if (selectedSports.length && selectedSports.length !== config.categories.length) {
         params.set('sports', selectedSports.join(','));
       }
-
       const response = await fetch(`/api/events?${params.toString()}`, { signal: controller.signal });
       const payload = await response.json();
-      setEvents(payload.events);
+      setEvents(payload.events || []);
     }
 
     loadEvents();
@@ -59,112 +58,25 @@ export default function App() {
   }, [search, selectedSports, config.categories.length]);
 
   const decoratedEvents = useMemo(() => {
-    const sportLabelById = Object.fromEntries(
-      config.categories.map((category) => [category.id, category.label])
-    );
-
+    const labels = Object.fromEntries(config.categories.map((c) => [c.id, c.label]));
     return events
-      .map((event) => ({
-        ...event,
-        sportLabel: sportLabelById[event.sport] ?? event.sport,
-        easternDate: toEventDate(event)
-      }))
+      .map((event) => ({ ...event, sportLabel: labels[event.sport] ?? event.sport, easternDate: toEventDate(event) }))
       .sort((a, b) => a.start.localeCompare(b.start));
   }, [config.categories, events]);
 
   const visibleEvents = useMemo(() => {
-    if (view === VIEWS.day) {
-      return eventsOnDay(decoratedEvents, anchorDate);
-    }
-
+    if (view === VIEWS.day) return eventsOnDay(decoratedEvents, anchorDate);
     if (view === VIEWS.week) {
       const start = anchorDate.startOf('week');
       const end = start.add(7, 'day');
-      return decoratedEvents.filter(
-        (event) => !event.easternDate.isBefore(start) && event.easternDate.isBefore(end)
-      );
+      return decoratedEvents.filter((e) => !e.easternDate.isBefore(start) && e.easternDate.isBefore(end));
     }
-
     return decoratedEvents;
   }, [anchorDate, decoratedEvents, view]);
 
   function toggleSport(sportId) {
     setSelectedSports((current) =>
-      current.includes(sportId)
-        ? current.filter((item) => item !== sportId)
-        : [...current, sportId]
-    );
-  }
-
-  function renderMonthView() {
-    const monthRows = buildMonthGrid(anchorDate);
-
-    return (
-      <div className="month-grid">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((label) => (
-          <div className="day-header" key={label}>{label}</div>
-        ))}
-        {monthRows.flat().map((day) => {
-          const dayEvents = eventsOnDay(decoratedEvents, day).slice(0, 3);
-          const isOutside = day.month() !== anchorDate.month();
-
-          return (
-            <div className={`day-cell ${isOutside ? 'outside' : ''}`} key={day.format('YYYY-MM-DD')}>
-              <div className="day-label">{day.format('D')}</div>
-              <div className="day-events">
-                {dayEvents.map((event) => (
-                  <EventCard key={event.id} event={event} compact />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  function renderWeekView() {
-    const weekDays = buildWeekDays(anchorDate);
-
-    return (
-      <div className="week-grid">
-        {weekDays.map((day) => (
-          <section className="week-column" key={day.format('YYYY-MM-DD')}>
-            <h3>{day.format('ddd, MMM D')}</h3>
-            <div className="stack">
-              {eventsOnDay(visibleEvents, day).map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-              {!eventsOnDay(visibleEvents, day).length && <p className="muted">No events</p>}
-            </div>
-          </section>
-        ))}
-      </div>
-    );
-  }
-
-  function renderDayView() {
-    return (
-      <section>
-        <h3>{anchorDate.format('dddd, MMMM D')}</h3>
-        <div className="stack">
-          {visibleEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-          {!visibleEvents.length && <p className="muted">No events on this day.</p>}
-        </div>
-      </section>
-    );
-  }
-
-  function renderAgendaView() {
-    return (
-      <div className="stack">
-        {decoratedEvents.map((event) => (
-          <EventCard key={event.id} event={event} />
-        ))}
-        {!decoratedEvents.length && <p className="muted">No events match current filters.</p>}
-      </div>
+      current.includes(sportId) ? current.filter((item) => item !== sportId) : [...current, sportId]
     );
   }
 
@@ -208,10 +120,59 @@ export default function App() {
           </div>
         </div>
 
-        {view === VIEWS.month && renderMonthView()}
-        {view === VIEWS.week && renderWeekView()}
-        {view === VIEWS.day && renderDayView()}
-        {view === VIEWS.agenda && renderAgendaView()}
+        {view === VIEWS.month && (
+          <div className="month-grid">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((label) => (
+              <div className="day-header" key={label}>{label}</div>
+            ))}
+            {buildMonthGrid(anchorDate).flat().map((day) => {
+              const dayEvents = eventsOnDay(decoratedEvents, day).slice(0, 3);
+              const isOutside = day.month() !== anchorDate.month();
+              return (
+                <div className={`day-cell ${isOutside ? 'outside' : ''}`} key={day.format('YYYY-MM-DD')}>
+                  <div className="day-label">{day.format('D')}</div>
+                  <div className="day-events">
+                    {dayEvents.map((event) => <EventCard key={event.id} event={event} compact />)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {view === VIEWS.week && (
+          <div className="week-grid">
+            {buildWeekDays(anchorDate).map((day) => {
+              const dayEvents = eventsOnDay(visibleEvents, day);
+              return (
+                <section className="week-column" key={day.format('YYYY-MM-DD')}>
+                  <h3>{day.format('ddd, MMM D')}</h3>
+                  <div className="stack">
+                    {dayEvents.map((event) => <EventCard key={event.id} event={event} />)}
+                    {!dayEvents.length && <p className="muted">No events</p>}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        )}
+
+        {view === VIEWS.day && (
+          <section>
+            <h3>{anchorDate.format('dddd, MMMM D')}</h3>
+            <div className="stack">
+              {visibleEvents.map((event) => <EventCard key={event.id} event={event} />)}
+              {!visibleEvents.length && <p className="muted">No events on this day.</p>}
+            </div>
+          </section>
+        )}
+
+        {view === VIEWS.agenda && (
+          <div className="stack">
+            {decoratedEvents.map((event) => <EventCard key={event.id} event={event} />)}
+            {!decoratedEvents.length && <p className="muted">No events match current filters.</p>}
+          </div>
+        )}
       </section>
     </main>
   );

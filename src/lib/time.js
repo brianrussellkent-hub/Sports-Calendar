@@ -15,6 +15,6 @@ export function formatEasternTime(utcIso, format = 'MMM D, h:mm A z') {
   return toEastern(utcIso).format(format);
 }
 
-export function startOfEasternDay(date = dayjs()) {
-  return dayjs.tz(date, EASTERN_TZ).startOf('day');
+export function startOfEasternDay() {
+  return dayjs().tz(EASTERN_TZ).startOf('day');
 }
