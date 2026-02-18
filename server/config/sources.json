@@ -1,0 +1,62 @@
+{
+  "timezone": "America/New_York",
+  "categories": [
+    {
+      "id": "mlb",
+      "label": "MLB",
+      "teams": ["NY Mets"],
+      "feeds": [
+        {
+          "name": "Mets Primary Feed",
+          "url": "https://www.stanza.co/api/schedules/mlb-mets/mlb-mets.ics",
+          "fallback": "server/data/samples/mets.ics"
+        }
+      ]
+    },
+    {
+      "id": "nfl",
+      "label": "NFL",
+      "teams": ["NY Giants"],
+      "feeds": [
+        {
+          "name": "Giants Primary Feed",
+          "url": "https://www.stanza.co/api/schedules/nfl-giants/nfl-giants.ics",
+          "fallback": "server/data/samples/giants.ics"
+        }
+      ]
+    },
+    {
+      "id": "f1",
+      "label": "Formula 1",
+      "feeds": [
+        {
+          "name": "Formula 1 Calendar",
+          "url": "https://files-f1.motorsportcalendars.com/Formula_1_2025.ics",
+          "fallback": "server/data/samples/f1.ics"
+        }
+      ]
+    },
+    {
+      "id": "nascar",
+      "label": "NASCAR",
+      "feeds": [
+        {
+          "name": "NASCAR Cup Calendar",
+          "url": "https://racedayschedule.com/feeds/nascar-cup-series.ics",
+          "fallback": "server/data/samples/nascar.ics"
+        }
+      ]
+    },
+    {
+      "id": "cycling",
+      "label": "Cycling",
+      "feeds": [
+        {
+          "name": "UCI WorldTour Calendar",
+          "url": "https://calendar.google.com/calendar/ical/2h2f90gq9q7jig0g4l8nqk7m2k%40group.calendar.google.com/public/basic.ics",
+          "fallback": "server/data/samples/cycling.ics"
+        }
+      ]
+    }
+  ]
+}
